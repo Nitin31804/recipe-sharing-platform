@@ -36,5 +36,20 @@
     </form>
   </div>
 
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent page reload
+      
+      // Simulate successful login
+      const btn = document.querySelector('.btn-primary');
+      btn.textContent = 'Authenticating...';
+      btn.disabled = true;
+
+      // Redirect after a short delay
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1000);
+    });
+  </script>
 </body>
 </html>
