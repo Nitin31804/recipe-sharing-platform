@@ -9,19 +9,50 @@
 </head>
 <body style="display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 4rem 2rem;">
 
-  <div class="widget" style="width: 100%; max-width: 800px; text-align: center;">
-    <h1 style="margin-bottom: 1rem; font-family: 'Playfair Display', serif; font-weight: 800;">Welcome to your Dashboard!</h1>
-    <p style="color: var(--text-secondary); margin-bottom: 2rem;">You have successfully logged in.</p>
+  <div style="width: 100%; max-width: 1200px;">
     
-    <div style="padding: 2rem; background: var(--bg-color); border-radius: var(--bento-radius); border: var(--glass-border);">
-        <h3 style="margin-bottom: 1rem;">Your Recipes</h3>
-        <p style="color: var(--text-secondary);">This is where your shared recipes and saved favorites will appear once the backend is connected.</p>
+    <div class="dashboard-header">
+        <div>
+            <h1 style="font-family: 'Playfair Display', serif; font-weight: 800;">My Recipes</h1>
+            <p style="color: var(--text-secondary);">Manage your shared recipes</p>
+        </div>
+        <div>
+            <button id="addRecipeBtn" class="btn-primary" style="width: auto;">+ Add New Recipe</button>
+            <button onclick="window.location.href='index.html'" class="btn-secondary" style="width: auto; margin-top: 0; margin-left: 1rem;">Log Out</button>
+        </div>
     </div>
 
-    <div style="margin-top: 2rem;">
-        <button onclick="window.location.href='index.html'" class="btn-secondary" style="width: auto;">Log Out</button>
+    <!-- Recipe Grid -->
+    <div id="recipeGrid" class="recipe-grid">
+        <!-- Recipes will be injected here by JavaScript -->
     </div>
   </div>
 
+  <!-- Add Recipe Modal -->
+  <div id="recipeModal" class="modal-overlay">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h2 style="font-family: 'Playfair Display', serif;">Add New Recipe</h2>
+              <button id="closeModalBtn" class="close-btn">&times;</button>
+          </div>
+          <form id="addRecipeForm">
+              <div class="form-group">
+                  <label for="recipeTitle">Recipe Title</label>
+                  <input type="text" id="recipeTitle" class="form-input" required placeholder="e.g. Classic Margherita Pizza">
+              </div>
+              <div class="form-group">
+                  <label for="recipeDesc">Description</label>
+                  <textarea id="recipeDesc" class="form-input" required placeholder="A brief description of the recipe..." rows="3" style="resize: vertical;"></textarea>
+              </div>
+              <div class="form-group">
+                  <label for="recipeIngredients">Ingredients (comma-separated)</label>
+                  <input type="text" id="recipeIngredients" class="form-input" required placeholder="e.g. Flour, Water, Yeast, Salt, Tomatoes, Cheese">
+              </div>
+              <button type="submit" class="btn-primary">Save Recipe</button>
+          </form>
+      </div>
+  </div>
+
+  <script src="dashboard.js"></script>
 </body>
 </html>
