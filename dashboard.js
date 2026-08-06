@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addRecipeBtn = document.getElementById('addRecipeBtn');
     const adminPanelBtn = document.getElementById('adminPanelBtn');
     const searchInput = document.getElementById('searchInput');
+    const loadingIndicator = document.getElementById('loadingIndicator');
     const closeModalBtn = document.getElementById('closeModalBtn');
     const addRecipeForm = document.getElementById('addRecipeForm');
 
@@ -51,33 +52,73 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Render recipes to the grid
-    function renderRecipes(searchTerm = "") {
-        let recipes = getRecipes();
+    async function renderRecipes(searchTerm = "") {
+        recipeGrid.innerHTML = '';
+        if (loadingIndicator) loadingIndicator.classList.remove('d-none');
         
-        // Filter logic
+        let localRecipes = getRecipes();
+        
+        // Filter local logic
         if (searchTerm) {
             const lowerTerm = searchTerm.toLowerCase();
-            recipes = recipes.filter(r => 
+            localRecipes = localRecipes.filter(r => 
                 r.title.toLowerCase().includes(lowerTerm) || 
                 r.ingredients.some(ing => ing.toLowerCase().includes(lowerTerm))
             );
         }
 
-        recipeGrid.innerHTML = '';
+        // Fetch Global Recipes from TheMealDB
+        let globalRecipes = [];
+        try {
+            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${searchTerm}`);
+            const data = await res.json();
+            
+            if (data.meals) {
+                globalRecipes = data.meals.map(meal => {
+                    // Extract ingredients up to 20
+                    let ingredients = [];
+                    for (let i = 1; i <= 20; i++) {
+                        if (meal[`strIngredient${i}`]) {
+                            ingredients.push(meal[`strIngredient${i}`].trim());
+                        }
+                    }
+                    
+                    return {
+                        title: meal.strMeal,
+                        desc: meal.strInstructions ? meal.strInstructions.substring(0, 100) + '...' : 'A delicious global dish.',
+                        image: meal.strMealThumb,
+                        ingredients: ingredients,
+                        isGlobal: true // Flag to identify API recipes
+                    };
+                });
+            }
+        } catch (err) {
+            console.error("Failed to fetch global recipes:", err);
+        }
+
+        if (loadingIndicator) loadingIndicator.classList.add('d-none');
         
-        if (recipes.length === 0) {
-            recipeGrid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1 / -1;">No recipes found.</p>';
+        // Merge and render
+        const allRecipes = [...localRecipes, ...globalRecipes];
+
+        if (allRecipes.length === 0) {
+            recipeGrid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1 / -1; text-align: center;">No recipes found. Try a different search!</p>';
             return;
         }
 
-        recipes.forEach(recipe => {
+        allRecipes.forEach(recipe => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
             
             let ingredientsHTML = '';
-            recipe.ingredients.forEach(ing => {
-                ingredientsHTML += `<li>${ing.trim()}</li>`;
+            // Limit to 5 ingredients for UI cleanliness, then add "..." if more
+            const displayIngs = recipe.ingredients.slice(0, 5);
+            displayIngs.forEach(ing => {
+                if (ing) ingredientsHTML += `<li>${ing}</li>`;
             });
+            if (recipe.ingredients.length > 5) {
+                ingredientsHTML += `<li style="color: var(--text-secondary); font-style: italic;">+ ${recipe.ingredients.length - 5} more</li>`;
+            }
 
             let imageHTML = '';
             if (recipe.image) {
@@ -87,11 +128,14 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 ${imageHTML}
                 <div class="recipe-card-content">
-                    <h3 class="recipe-title">${recipe.title}</h3>
-                    <p class="recipe-desc">${recipe.desc}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <h3 class="recipe-title">${recipe.title}</h3>
+                        ${recipe.isGlobal ? '<span style="font-size: 0.7rem; background: var(--accent-color); color: white; padding: 0.2rem 0.5rem; border-radius: 1rem; white-space: nowrap;">Global</span>' : ''}
+                    </div>
+                    <p class="recipe-desc" style="font-size: 0.9rem;">${recipe.desc}</p>
                     <div class="recipe-ingredients">
-                        <strong style="display:block; margin-bottom: 0.5rem; color: var(--text-primary);">Ingredients:</strong>
-                        <ul>
+                        <strong style="display:block; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.85rem;">Key Ingredients:</strong>
+                        <ul style="font-size: 0.85rem;">
                             ${ingredientsHTML}
                         </ul>
                     </div>
@@ -101,10 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Search Listener
+    // Debounce search so we don't spam the API
+    let searchTimeout;
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            renderRecipes(e.target.value);
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                renderRecipes(e.target.value);
+            }, 500); // 500ms delay
         });
     }
 

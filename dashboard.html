@@ -26,7 +26,12 @@
 
     <!-- Search and Filter Bar -->
     <div style="background: var(--glass-bg); backdrop-filter: blur(16px); padding: 1.5rem; border-radius: var(--bento-radius); border: var(--glass-border); margin-bottom: 2rem; display: flex; gap: 1rem;">
-        <input type="text" id="searchInput" class="form-input" style="margin-bottom: 0;" placeholder="Search recipes by title or ingredients...">
+        <input type="text" id="searchInput" class="form-input" style="margin-bottom: 0;" placeholder="Search 500+ global recipes or your local ones...">
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="d-none" style="text-align: center; padding: 2rem; color: var(--accent-color); font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600;">
+        Fetching recipes from around the world...
     </div>
 
     <!-- Recipe Grid -->
