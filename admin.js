@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Authentication Check
+    if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
+        window.location.href = 'login.html';
+        return; // Stop execution
+    }
+
     const totalUsersCount = document.getElementById('totalUsersCount');
     const usersTableBody = document.getElementById('usersTableBody');
 
@@ -54,4 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Dashboard
     renderAdminDashboard();
+
+    // Logout Logic
+    document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+        sessionStorage.removeItem('isAdminLoggedIn');
+        window.location.href = 'login.html';
+    });
 });

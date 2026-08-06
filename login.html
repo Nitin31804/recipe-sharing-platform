@@ -41,6 +41,15 @@
       e.preventDefault(); // Prevent page reload
       
       // Simulate successful login
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (email === 'admin@admin.com' && password === 'admin123') {
+          sessionStorage.setItem('isAdminLoggedIn', 'true');
+      } else {
+          sessionStorage.removeItem('isAdminLoggedIn');
+      }
+
       const btn = document.querySelector('.btn-primary');
       btn.textContent = 'Authenticating...';
       btn.disabled = true;

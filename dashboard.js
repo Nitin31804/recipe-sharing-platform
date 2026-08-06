@@ -2,8 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const recipeGrid = document.getElementById('recipeGrid');
     const modal = document.getElementById('recipeModal');
     const addRecipeBtn = document.getElementById('addRecipeBtn');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
     const addRecipeForm = document.getElementById('addRecipeForm');
+
+    // Check Admin Privileges
+    if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+        adminPanelBtn.classList.remove('d-none');
+    }
 
     // Default mock data
     const defaultRecipes = [
