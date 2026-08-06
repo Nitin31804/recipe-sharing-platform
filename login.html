@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In | Recipe Sharing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem 0;">
+
+  <div class="widget" style="width: 100%; max-width: 400px;">
+    <h1 style="text-align: center; margin-bottom: 2rem; font-family: 'Playfair Display', serif; font-weight: 800;">Welcome Back</h1>
+    
+    <form id="loginForm">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" class="form-input" id="email" placeholder="Enter your email" required>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-input" id="password" placeholder="Enter password" required>
+      </div>
+
+      <!-- Buttons -->
+      <div>
+        <button type="submit" class="btn-primary">Log In</button>
+      </div>
+
+      <p style="text-align: center; margin-top: 1.5rem; color: var(--text-secondary);">
+        Don't have an account? <a href="index.html" style="color: var(--accent-color); font-weight: 600;">Sign up</a>
+      </p>
+    </form>
+  </div>
+
+</body>
+</html>
