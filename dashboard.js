@@ -35,34 +35,22 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('myRecipes', JSON.stringify(recipes));
     }
 
-    let allIndianMeals = []; // Cache for API data
+    // Cache for API data
+    let allIndianMeals = [
+        { title: "Chicken Tikka Masala", image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80", id: "Chicken Tikka Masala", isGlobal: true },
+        { title: "Palak Paneer", image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&q=80", id: "Palak Paneer", isGlobal: true },
+        { title: "Biryani", image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80", id: "Biryani", isGlobal: true },
+        { title: "Dal Makhani", image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80", id: "Dal Makhani", isGlobal: true },
+        { title: "Samosa", image: "https://images.unsplash.com/photo-1601050690117-94f5f6af8bc7?w=500&q=80", id: "Samosa", isGlobal: true },
+        { title: "Chole Bhature", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=80", id: "Chole Bhature", isGlobal: true }
+    ];
 
     // Render recipes to the grid
     async function renderRecipes(searchTerm = "") {
         recipeGrid.innerHTML = '';
-        if (loadingIndicator) loadingIndicator.classList.remove('d-none');
+        if (loadingIndicator) loadingIndicator.classList.add('d-none');
         
         let localRecipes = getRecipes();
-        
-        // Fetch Indian Recipes from TheMealDB if not cached
-        if (allIndianMeals.length === 0) {
-            try {
-                const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?a=Indian`);
-                const data = await res.json();
-                if (data.meals) {
-                    allIndianMeals = data.meals.map(meal => ({
-                        title: meal.strMeal,
-                        image: meal.strMealThumb,
-                        id: meal.idMeal,
-                        isGlobal: true
-                    }));
-                }
-            } catch (err) {
-                console.error("Failed to fetch Indian recipes:", err);
-            }
-        }
-
-        if (loadingIndicator) loadingIndicator.classList.add('d-none');
         
         // Filter logic
         const lowerTerm = searchTerm.toLowerCase();
@@ -79,15 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let filteredAPI = allIndianMeals;
         if (searchTerm) {
             filteredAPI = allIndianMeals.filter(r => r.title.toLowerCase().includes(lowerTerm));
+            
+            // If search doesn't perfectly match existing items, add an "AI Generate" card!
+            if (!allIndianMeals.some(r => r.title.toLowerCase() === lowerTerm)) {
+                filteredAPI.unshift({
+                    title: `Cook "${searchTerm}" with AI ✨`,
+                    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=500&q=80",
+                    id: searchTerm,
+                    isGlobal: true
+                });
+            }
         }
         
         // Merge and render
         const allRecipes = [...filteredLocal, ...filteredAPI];
-
-        if (allRecipes.length === 0) {
-            recipeGrid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1 / -1; text-align: center;">No Indian recipes found. Try a different search!</p>';
-            return;
-        }
 
         allRecipes.forEach(recipe => {
             const card = document.createElement('div');
@@ -130,38 +123,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    async function openDetailedRecipe(id) {
-        if (loadingIndicator) loadingIndicator.classList.remove('d-none');
+    async function openDetailedRecipe(dishName) {
+        // Reset modal UI
+        document.getElementById('detailImage').src = "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=1000&q=80";
+        document.getElementById('detailTitle').textContent = `AI is cooking ${dishName}...`;
+        document.getElementById('detailArea').textContent = "Ollama Local AI";
+        document.getElementById('detailInstructions').innerHTML = `<div class="ai-loader" style="text-align:center; padding: 2rem;">Generating authentic recipe using local AI...<br><small style="opacity:0.7">This may take a few seconds.</small></div>`;
+        document.getElementById('detailIngredients').innerHTML = '';
+        detailedModal.classList.add('active');
+        
         try {
-            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+            const prompt = `You are a master Indian chef. Provide a recipe for ${dishName}. Return ONLY a raw JSON object (no markdown, no backticks, no other text) with exactly this structure: {"title": "${dishName}", "ingredients": [{"item": "ingredient 1", "measure": "measure 1"}], "instructions": "Step 1...\\nStep 2..."}`;
+            
+            // Note: Defaulting to llama3, user can change this if needed.
+            const res = await fetch(`http://localhost:11434/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'llama3',
+                    prompt: prompt,
+                    stream: false,
+                    format: 'json'
+                })
+            });
+            
             const data = await res.json();
-            if (data.meals && data.meals.length > 0) {
-                const meal = data.meals[0];
-                
-                document.getElementById('detailImage').src = meal.strMealThumb;
-                document.getElementById('detailTitle').textContent = meal.strMeal;
-                document.getElementById('detailInstructions').textContent = meal.strInstructions;
-                
-                // Extract ingredients
-                const ul = document.getElementById('detailIngredients');
-                ul.innerHTML = '';
-                for (let i = 1; i <= 20; i++) {
-                    if (meal[`strIngredient${i}`] && meal[`strIngredient${i}`].trim() !== '') {
-                        const li = document.createElement('li');
-                        li.style.padding = '0.5rem 0';
-                        li.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
-                        li.innerHTML = `<strong>${meal[`strMeasure${i}`]}</strong> ${meal[`strIngredient${i}`]}`;
-                        ul.appendChild(li);
-                    }
-                }
-                
-                detailedModal.classList.add('active');
-            }
+            const recipeData = JSON.parse(data.response);
+            
+            document.getElementById('detailTitle').textContent = recipeData.title;
+            document.getElementById('detailInstructions').textContent = recipeData.instructions;
+            
+            // Extract ingredients
+            const ul = document.getElementById('detailIngredients');
+            ul.innerHTML = '';
+            recipeData.ingredients.forEach(ing => {
+                const li = document.createElement('li');
+                li.style.padding = '0.5rem 0';
+                li.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+                li.innerHTML = `<strong>${ing.measure}</strong> ${ing.item}`;
+                ul.appendChild(li);
+            });
         } catch (err) {
-            console.error("Failed to load details:", err);
-            alert("Failed to load recipe details. Please try again.");
+            console.error("Failed to load details from Ollama:", err);
+            document.getElementById('detailInstructions').innerHTML = `<p style="color: red;">Failed to connect to local Ollama AI. Please ensure Ollama is running on your computer with CORS enabled:</p><pre style="background:#eee; padding:1rem;">$env:OLLAMA_ORIGINS="*"<br>ollama serve</pre>`;
         }
-        if (loadingIndicator) loadingIndicator.classList.add('d-none');
     }
 
     // Debounce search so we don't spam the API
