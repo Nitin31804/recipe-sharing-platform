@@ -13,43 +13,29 @@ document.addEventListener('DOMContentLoaded', () => {
         adminPanelBtn.classList.remove('d-none');
     }
 
-    // Default mock data
-    const defaultRecipes = [
-        {
-            title: "Classic Margherita Pizza",
-            desc: "A simple and delicious Neapolitan pizza with fresh tomatoes, mozzarella cheese, and basil.",
-            image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500&q=80",
-            ingredients: ["Pizza Dough", "San Marzano Tomatoes", "Fresh Mozzarella", "Fresh Basil", "Olive Oil", "Salt"]
-        },
-        {
-            title: "Avocado Toast",
-            desc: "Healthy and quick breakfast option packed with good fats and flavor.",
-            image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=500&q=80",
-            ingredients: ["Sourdough Bread", "Avocado", "Cherry Tomatoes", "Red Pepper Flakes", "Lemon Juice", "Sea Salt"]
-        },
-        {
-            title: "Chocolate Chip Cookies",
-            desc: "Soft and chewy on the inside, crispy on the edges. The perfect cookie.",
-            image: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500&q=80",
-            ingredients: ["Butter", "Brown Sugar", "White Sugar", "Eggs", "Vanilla Extract", "Flour", "Baking Soda", "Chocolate Chips"]
-        }
-    ];
+    // Default mock data removed to focus purely on Indian cuisine
+    
+    // Wipe old dummy recipes to start fresh with Indian cuisine
+    if (!localStorage.getItem('indianCuisineWipeDone')) {
+        localStorage.removeItem('myRecipes');
+        localStorage.setItem('indianCuisineWipeDone', 'true');
+    }
 
-    // Load recipes from localStorage or use defaults
+    // Load local user-added recipes
     function getRecipes() {
         const stored = localStorage.getItem('myRecipes');
         if (stored) {
             return JSON.parse(stored);
         } else {
-            localStorage.setItem('myRecipes', JSON.stringify(defaultRecipes));
-            return defaultRecipes;
+            return [];
         }
     }
 
-    // Save recipes to localStorage
     function saveRecipes(recipes) {
         localStorage.setItem('myRecipes', JSON.stringify(recipes));
     }
+
+    let allIndianMeals = []; // Cache for API data
 
     // Render recipes to the grid
     async function renderRecipes(searchTerm = "") {
@@ -58,91 +44,124 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let localRecipes = getRecipes();
         
-        // Filter local logic
-        if (searchTerm) {
-            const lowerTerm = searchTerm.toLowerCase();
-            localRecipes = localRecipes.filter(r => 
-                r.title.toLowerCase().includes(lowerTerm) || 
-                r.ingredients.some(ing => ing.toLowerCase().includes(lowerTerm))
-            );
-        }
-
-        // Fetch Global Recipes from TheMealDB
-        let globalRecipes = [];
-        try {
-            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${searchTerm}`);
-            const data = await res.json();
-            
-            if (data.meals) {
-                globalRecipes = data.meals.map(meal => {
-                    // Extract ingredients up to 20
-                    let ingredients = [];
-                    for (let i = 1; i <= 20; i++) {
-                        if (meal[`strIngredient${i}`]) {
-                            ingredients.push(meal[`strIngredient${i}`].trim());
-                        }
-                    }
-                    
-                    return {
+        // Fetch Indian Recipes from TheMealDB if not cached
+        if (allIndianMeals.length === 0) {
+            try {
+                const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?a=Indian`);
+                const data = await res.json();
+                if (data.meals) {
+                    allIndianMeals = data.meals.map(meal => ({
                         title: meal.strMeal,
-                        desc: meal.strInstructions ? meal.strInstructions.substring(0, 100) + '...' : 'A delicious global dish.',
                         image: meal.strMealThumb,
-                        ingredients: ingredients,
-                        isGlobal: true // Flag to identify API recipes
-                    };
-                });
+                        id: meal.idMeal,
+                        isGlobal: true
+                    }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch Indian recipes:", err);
             }
-        } catch (err) {
-            console.error("Failed to fetch global recipes:", err);
         }
 
         if (loadingIndicator) loadingIndicator.classList.add('d-none');
         
+        // Filter logic
+        const lowerTerm = searchTerm.toLowerCase();
+        
+        let filteredLocal = localRecipes;
+        if (searchTerm) {
+            filteredLocal = localRecipes.filter(r => {
+                const ings = r.ingredients || [];
+                return (r.title && r.title.toLowerCase().includes(lowerTerm)) || 
+                       ings.some(ing => ing && ing.toLowerCase().includes(lowerTerm));
+            });
+        }
+        
+        let filteredAPI = allIndianMeals;
+        if (searchTerm) {
+            filteredAPI = allIndianMeals.filter(r => r.title.toLowerCase().includes(lowerTerm));
+        }
+        
         // Merge and render
-        const allRecipes = [...localRecipes, ...globalRecipes];
+        const allRecipes = [...filteredLocal, ...filteredAPI];
 
         if (allRecipes.length === 0) {
-            recipeGrid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1 / -1; text-align: center;">No recipes found. Try a different search!</p>';
+            recipeGrid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1 / -1; text-align: center;">No Indian recipes found. Try a different search!</p>';
             return;
         }
 
         allRecipes.forEach(recipe => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
+            card.style.cursor = 'pointer'; // Make it look clickable
             
-            let ingredientsHTML = '';
-            // Limit to 5 ingredients for UI cleanliness, then add "..." if more
-            const displayIngs = recipe.ingredients.slice(0, 5);
-            displayIngs.forEach(ing => {
-                if (ing) ingredientsHTML += `<li>${ing}</li>`;
-            });
-            if (recipe.ingredients.length > 5) {
-                ingredientsHTML += `<li style="color: var(--text-secondary); font-style: italic;">+ ${recipe.ingredients.length - 5} more</li>`;
+            // Only add click listener to API recipes for now, since local recipes don't have an ID in the DB
+            if (recipe.isGlobal) {
+                card.onclick = () => openDetailedRecipe(recipe.id);
             }
 
             let imageHTML = '';
             if (recipe.image) {
-                imageHTML = `<img src="${recipe.image}" alt="${recipe.title}" class="recipe-card-img" onerror="this.style.display='none'">`;
+                imageHTML = `<img src="${recipe.image}" alt="${recipe.title}" class="recipe-card-img" style="height: 250px;" onerror="this.style.display='none'">`;
             }
 
             card.innerHTML = `
                 ${imageHTML}
                 <div class="recipe-card-content">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3 class="recipe-title">${recipe.title}</h3>
-                        ${recipe.isGlobal ? '<span style="font-size: 0.7rem; background: var(--accent-color); color: white; padding: 0.2rem 0.5rem; border-radius: 1rem; white-space: nowrap;">Global</span>' : ''}
-                    </div>
-                    <p class="recipe-desc" style="font-size: 0.9rem;">${recipe.desc}</p>
-                    <div class="recipe-ingredients">
-                        <strong style="display:block; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.85rem;">Key Ingredients:</strong>
-                        <ul style="font-size: 0.85rem;">
-                            ${ingredientsHTML}
-                        </ul>
+                        <h3 class="recipe-title" style="margin-bottom: 0;">${recipe.title}</h3>
                     </div>
                 </div>
             `;
             recipeGrid.appendChild(card);
         });
+    }
+
+    // Detailed Recipe Logic
+    const detailedModal = document.getElementById('detailedRecipeModal');
+    const closeDetailedBtn = document.getElementById('closeDetailedBtn');
+    
+    closeDetailedBtn.addEventListener('click', () => {
+        detailedModal.classList.remove('active');
+    });
+
+    detailedModal.addEventListener('click', (e) => {
+        if (e.target === detailedModal) {
+            detailedModal.classList.remove('active');
+        }
+    });
+
+    async function openDetailedRecipe(id) {
+        if (loadingIndicator) loadingIndicator.classList.remove('d-none');
+        try {
+            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+            const data = await res.json();
+            if (data.meals && data.meals.length > 0) {
+                const meal = data.meals[0];
+                
+                document.getElementById('detailImage').src = meal.strMealThumb;
+                document.getElementById('detailTitle').textContent = meal.strMeal;
+                document.getElementById('detailInstructions').textContent = meal.strInstructions;
+                
+                // Extract ingredients
+                const ul = document.getElementById('detailIngredients');
+                ul.innerHTML = '';
+                for (let i = 1; i <= 20; i++) {
+                    if (meal[`strIngredient${i}`] && meal[`strIngredient${i}`].trim() !== '') {
+                        const li = document.createElement('li');
+                        li.style.padding = '0.5rem 0';
+                        li.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+                        li.innerHTML = `<strong>${meal[`strMeasure${i}`]}</strong> ${meal[`strIngredient${i}`]}`;
+                        ul.appendChild(li);
+                    }
+                }
+                
+                detailedModal.classList.add('active');
+            }
+        } catch (err) {
+            console.error("Failed to load details:", err);
+            alert("Failed to load recipe details. Please try again.");
+        }
+        if (loadingIndicator) loadingIndicator.classList.add('d-none');
     }
 
     // Debounce search so we don't spam the API
