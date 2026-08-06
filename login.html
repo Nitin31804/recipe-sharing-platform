@@ -45,9 +45,9 @@
       const password = document.getElementById('password').value;
 
       if (email === 'admin@admin.com' && password === 'admin123') {
-          sessionStorage.setItem('isAdminLoggedIn', 'true');
+          localStorage.setItem('isAdminLoggedIn', 'true');
       } else {
-          sessionStorage.removeItem('isAdminLoggedIn');
+          localStorage.removeItem('isAdminLoggedIn');
       }
 
       const btn = document.querySelector('.btn-primary');

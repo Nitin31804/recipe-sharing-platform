@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addRecipeForm = document.getElementById('addRecipeForm');
 
     // Check Admin Privileges
-    if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+    if (localStorage.getItem('isAdminLoggedIn') === 'true') {
         adminPanelBtn.classList.remove('d-none');
     }
 

@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Authentication Check
-    if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
+    if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
         window.location.href = 'login.html';
         return; // Stop execution
     }
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Logout Logic
     document.getElementById('adminLogoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('isAdminLoggedIn');
+        localStorage.removeItem('isAdminLoggedIn');
         window.location.href = 'login.html';
     });
 });

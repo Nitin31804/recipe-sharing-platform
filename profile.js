@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     
     // Check if the user is an admin
-    const isAdmin = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+    const isAdmin = localStorage.getItem('isAdminLoggedIn') === 'true';
 
     // Populate profile details
     const profileName = document.getElementById('profileName');
