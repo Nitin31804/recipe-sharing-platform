@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | User Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body style="display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 4rem 2rem;">
+
+  <div style="width: 100%; max-width: 900px;">
+    
+    <!-- Admin Header -->
+    <div class="dashboard-header" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+        <div>
+            <h1 style="font-family: 'Playfair Display', serif; font-weight: 800;">Admin Dashboard</h1>
+            <p style="color: var(--text-secondary);">User Statistics and Registration Details</p>
+        </div>
+        <div>
+            <button onclick="window.location.href='index.html'" class="btn-secondary" style="width: auto;">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="admin-stats-card">
+        <h3 style="color: var(--text-secondary); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.1em;">Total New Users</h3>
+        <div class="stats-number" id="totalUsersCount">0</div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Registered via the platform</p>
+    </div>
+
+    <!-- Users Table -->
+    <div class="admin-table-container">
+        <h2 style="font-family: 'Playfair Display', serif; margin-bottom: 1.5rem;">Registered Users</h2>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email Address</th>
+                    <th>Date Registered</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- User rows will be injected here by admin.js -->
+            </tbody>
+        </table>
+    </div>
+
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

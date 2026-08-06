@@ -66,6 +66,12 @@ document.getElementById('registrationForm').addEventListener('submit', function(
     };
     console.log('Registration Data:', formData);
 
+    // Save to local storage for Admin Dashboard
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    registeredUsers.push(formData);
+    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+
+
     // Show success message
     successMessage.classList.remove('d-none');
     
